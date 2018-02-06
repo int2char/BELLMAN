@@ -134,7 +134,7 @@ __global__ void bellmanhigh(int *st,int *te,int *d,int *w,int E,int N,int size,i
 }
 vector<vector<int>> parallelor::routalg(int s,int t,int bw)
 {
-	cout<<"blasting "<<endl;
+	//cout<<"blasting "<<endl;
 	int kk=1;
 	time_t start,end;
 	start=clock();
@@ -149,8 +149,8 @@ vector<vector<int>> parallelor::routalg(int s,int t,int bw)
 		cudaMemcpy(m,dev_m,sizeof(int),cudaMemcpyDeviceToHost);
 	}
 	cudaMemcpy(d,dev_d,LY*YE*nodenum*sizeof(int),cudaMemcpyDeviceToHost);
-	for(int i=0;i<LY*YE*nodenum;i++)
-		cout<<d[i]<<" ";
+	/*for(int i=0;i<LY*YE*nodenum;i++)
+		cout<<d[i]<<" ";*/
 	cout<<endl;
 	cudaStreamSynchronize(0);
 	end=clock();

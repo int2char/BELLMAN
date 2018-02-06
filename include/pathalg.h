@@ -15,9 +15,9 @@
 #define BS 5
 #define WD 8
 #ifndef LY 
-	#define LY 2
+	#define LY 100
 #endif
-#define YE 2
+#define YE 100
 #define inf INT_MAX/2
 using namespace std;
 class algbase {
@@ -112,7 +112,7 @@ class dijkstor:public algbase{
         		{
         			for(int l=0;l<stes.size();l++)
         			{
-        				cout<<"in it "<<endl;
+        				//cout<<"in it "<<endl;
                 		int tnode=-1;
                 		int tv=WD+1;
         				vector<int>dist(pnodesize,INT_MAX);
@@ -153,12 +153,12 @@ class dijkstor:public algbase{
 							int prn=tnode;
 							while(prn!=s)
 							{
-								cout<<prn<<" ";
+								//cout<<prn<<" ";
 								prn=pre[prn];
 							}
-							cout<<prn<<" ";
+							//cout<<prn<<" ";
 						}
-						cout<<endl;
+						//cout<<endl;
 						result[k].push_back(tv);
         			}
         		}
