@@ -45,25 +45,11 @@ class Graph
         pair<int,int>routalg(int s,int t,int bw)
 		{
         	
-        	//vector<vector<int>>a=router1.routalg(0,0,0);
+        	vector<vector<int>>a=router1.routalg(0,0,0);
 			vector<vector<int>>b=router2.routalg(0,0,0);
 			int flag=0;
-			/*for(int i=0;i<a.size();i++)
-				for(int j=0;j<b[i].size();j++)
-				{
-					if(b[i][j]!=a[i][j])
-						if(flag==0)
-							{
-								cout<<i<<" "<<j<<endl;
-								flag=1;
-							}
-								//cout<<"erro!"<<a[i][j]<<" "<<b[i][j]<<endl;
-				}*/
 			return make_pair(0,0);
 		}
-        int optimize(vector<vector<int>>&a)
-        {
-        }
         virtual ~Graph(){};
     protected:
         void addedge(int _s,int _t,int _w,double _bw=500){
@@ -117,6 +103,7 @@ class Graph
             for(int i=0;i<edges.size();i++)
             {
             	int s=edges[i].s;
+            	int t=edges[i].t;
             	near[s].push_back(edges[i].t);
             }
             vector<edge>redges;
@@ -126,27 +113,22 @@ class Graph
             cout<<"asasd"<<endl;
             vector<vector<int>>esigns(LY,vector<int>());
             for(int i=0;i<LY;i++)
-            	for(int j=0;j<edges.size();j++)
+            	for(int j=0;j<2*edges.size();j++)
             	{
+            		
             		int ran=rand()%100;
-            		if(ran<50)
+            		if(ran<20)
             			esigns[i].push_back(-1);
             		else
-            			esigns[i].push_back(1);
+            			esigns[i].push_back(rand()%10+1);
             	}
             vector<pair<int,int>> stpair;
             int count=0;
             set<pair<int,int>>has;
-            for(int i=0;i<YE;i++)
-            {
-            	int t=i;
-            	while(t==i)t=rand()%n;
-            	stpair.push_back(make_pair(i,t));
-            }
-            //stpair.push_back(make_pair(3,6));
-            //stpair.push_back(make_pair(0,6));
+            stpair.push_back(make_pair(0,100));
+            stpair.push_back(make_pair(2,100));
             cout<<"stpair size is "<<stpair.size()<<endl;
-           // router1.init(make_pair(redges,esigns),stpair,erelate,ginfo(maxedge+1,edges.size(),n,maxnode+1,etn2n));
+            router1.init(make_pair(redges,esigns),stpair,erelate,ginfo(maxedge+1,edges.size(),n,maxnode+1,etn2n));
             router2.init(make_pair(redges,esigns),stpair,erelate,ginfo(maxedge+1,edges.size(),n,maxnode+1,etn2n));
             return make_pair(redges,esigns);
         };
@@ -163,7 +145,7 @@ private:
     virtual void GenGraph(){
         int count = 0;
         set<pair<int, int>>flag;
-        double threhod = 10*n/((n-1));
+        double threhod = 6*n/((n-1));
         for (int i = 0; i <n; i++)
             for (int j =i+1; j<n;j++)
                 if (i != j)

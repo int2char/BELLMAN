@@ -10,21 +10,16 @@
 #include"edge.h"
 #include<sys/time.h>
 #include<queue>
+#include <algorithm>
 #define ML 50
 #define BS 5
-#define WD 5
+#define WD 8
 #ifndef LY 
-	#define LY 500
+	#define LY 2
 #endif
-#define YE 100
+#define YE 2
 #define inf INT_MAX/2
 using namespace std;
-/*class pairless {
-    public:
-        bool operator()(pair<int,int>&a,pair<int,int>&b){
-            return a.second<b.second;
-        }
-};*/
 class algbase {
     protected:
         vector<int> getrout(int &s, int &t, vector<edge> &edges, vector<int> &pre) {
@@ -59,6 +54,7 @@ class dijkstor:public algbase{
 		vector<int>order;
 		vector<vector<vector<int>>>neie;
 		vector<vector<vector<int>>>nein;
+		vector<vector<vector<int>>>neiw;
 		vector<int>esign;
 		vector<pair<int,int>>stes;
 		int W;
@@ -90,10 +86,6 @@ class dijkstor:public algbase{
     		pre=pp;
 			pesize=edges.size();
 			W=WD+1;
-			//vector<vector<vector<int>>>tnein(LY,vector<vector<int>>());
-			//vector<vector<vector<int>>>tneie(LY,vector<vector<int>>());
-			//neie=tneie;
-			//nein=tnein;
 			for(int k=0;k<LY;k++)
 			{
 				vector<vector<int>>tmpn(pnodesize,vector<int>());
@@ -103,14 +95,13 @@ class dijkstor:public algbase{
 						int s=edges[i].s;
 						int t=edges[i].t;
 						tmpn[s].push_back(t);
-						tmpn[t].push_back(s);
 						tmpe[s].push_back(esigns[k][i]);
-						tmpe[t].push_back(esigns[k][i]);
 					}
 				
 				neie.push_back(tmpe);
 				nein.push_back(tmpn);
 			}
+			cout<<"good so far "<<endl;
         }
         virtual vector<vector<int>> routalg(int s,int t,int bw){
         		cout<<"in rout alg"<<endl;
@@ -119,37 +110,39 @@ class dijkstor:public algbase{
         		vector<vector<int>>result(LY,vector<int>());
         		for(int k=0;k<LY;k++)
         		{
-        			//cout<<stes.size()<<endl;
         			for(int l=0;l<stes.size();l++)
         			{
+        				cout<<"in it "<<endl;
                 		int tnode=-1;
                 		int tv=WD+1;
-        				vector<int>visited(pnodesize,0);
+        				vector<int>dist(pnodesize,INT_MAX);
         				vector<int>pre(pnodesize,-1);
         				int vflag=1;
-        				queue<pair<int,int>>que;
+        				priority_queue<pair<int, int>,vector<pair<int,int>>,std::less<std::pair<int, int>>>que;
         				int s=stes[l].first;
         				int t=stes[l].second;
         				que.push(make_pair(s,0));
-        	        	visited[s]=1;
+        				dist[s]=0;
         				while(!que.empty()&&vflag)
         				{
-        					int node=que.front().first;
-        					int v=que.front().second;
-        					if(v>=WD)break;
+        					int node=que.top().first;
+        					int v=que.top().second;
         					que.pop();
         					for(int i=0;i<nein[k][node].size();i++)
         					{
+        						int w=neie[k][node][i];
         						if(neie[k][node][i]>0)
         						{	
         							int to=nein[k][node][i];
-        							if(visited[to]==0)
+        							if(dist[to]>dist[node]+w)
         							{
-        								pre[to]=node;que.push(make_pair(to,v+1));visited[to]=1;
+        								pre[to]=node;
+        								dist[to]=dist[node]+w;
+        								que.push(make_pair(to,dist[to]));
         							}
         							else
         								continue;
-        							if(to==t){tnode=to;tv=v+1;vflag=0;break;}
+        							if(to==t){tnode=to;tv=v+w;vflag=0;break;}
         						}
         					}
         				}
@@ -160,26 +153,19 @@ class dijkstor:public algbase{
 							int prn=tnode;
 							while(prn!=s)
 							{
-								//cout<<prn<<" ";
+								cout<<prn<<" ";
 								prn=pre[prn];
 							}
-							//cout<<prn<<" ";
+							cout<<prn<<" ";
 						}
-						//cout<<endl;
+						cout<<endl;
 						result[k].push_back(tv);
         			}
-        				
         		}
         		end=clock();
-        		/*for(int i=0;i<LY;i++)
-        			{
-        				cout<<i<<":";
-        				for(int j=0;j<YE;j++)
-        					cout<<result[i][j]<<" ";
-        				cout<<endl;
-        			}*/
         		cout<<"cpu time is: "<<end-start<<endl;
-        		return result;
+        		cout<<"good sofor"<<endl;
+        		return vector<vector<int>>();
 	 	}
         static bool compare(pair<int,int>&a,pair<int,int>&b)
         {
@@ -211,6 +197,7 @@ class parallelor:public algbase
 		int *dev_beg,*beg;
 		int *dev_value,*value;
 		int *dev_height,*height;
+		int*w,*dev_w;
 		vector<vector<int>>neibour;
 		vector<edge>edges;
 		vector<int>ordernode;

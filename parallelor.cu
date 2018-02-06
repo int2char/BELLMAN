@@ -47,9 +47,11 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 	mark=new int;
 	*mark=0;
 	W=WD+1;
-	st=new int[2*edges.size()*LY];
-	te=new int[2*edges.size()*LY];
+	st=new int[edges.size()*LY];
+	te=new int[edges.size()*LY];
 	d=new int[nodenum*LY*YE];
+	w=new int[edges.size()*LY];
+	m=new int;
 	esignes=new int[edges.size()*LY];
 	vector<vector<int>>nein(nodenum*LY,vector<int>());
 	neibn=nein;
@@ -59,9 +61,7 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 			int s=edges[i].s;
 			int t=edges[i].t;
 			neibn[s].push_back(t);
-			neibn[t].push_back(s);
 			neie[s].push_back(i);
-			neie[t].push_back(i);
 		}
 	int count=0;
 	for(int k=0;k<LY;k++)
@@ -69,14 +69,20 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 			for(int j=0;j<neibn[i].size();j++)
 			{
 				st[count]=i;
-				if(esigns[k][neie[i][j]]==-1)
+				if(esigns[k][neie[i][j]]<0)
 					te[count]=i;
 				else
 					te[count]=neibn[i][j];
 				count++;
 			}
+	//cout<<"good so far "<<endl;
 	for(int i=0;i<nodenum*LY*YE;i++)
-		d[i]=WD+1;
+		d[i]=INT_MAX/2;
+	int cc=0;
+	for(int k=0;k<LY;k++)
+		for(int i=0;i<edges.size();i++)
+			w[cc++]=esigns[k][i];
+	cout<<cc<<" "<<edges.size()<<endl;
 	for(int k=0;k<LY;k++)
 	{
 		int boff=k*YE*nodenum;
@@ -87,33 +93,44 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 				d[boff+soff+stpair[i].first]=0;
 		}
 	}
-	cudaMalloc((void**)&dev_st,2*LY*edges.size()*sizeof(int));
-	cudaMalloc((void**)&dev_te,2*LY*edges.size()*sizeof(int));
+	//for(int i=0;i<edges.size();i++)
+		//cout<<st[i]<<" "<<te[i]<<" "<<w[i]<<endl;
+	//for(int i=0;i<nodenum;i++)
+		//cout<<d[i]<<endl;
+	//cout<<"good so far "<<endl;
+	cudaMalloc((void**)&dev_st,LY*edges.size()*sizeof(int));
+	cudaMalloc((void**)&dev_te,LY*edges.size()*sizeof(int));
 	cudaMalloc((void**)&dev_d,YE*LY*nodenum*sizeof(int));
+	cudaMalloc((void**)&dev_w,LY*edges.size()*sizeof(int));
+	cudaMalloc((void**)&dev_m,sizeof(int));
 	if(dev_d==NULL) {
 		printf("couldn't allocate %d int's.\n");
 	}
-	cuMemGetInfo()
-	cudaMemcpy(dev_te,te,2*LY*edges.size()*sizeof(int),cudaMemcpyHostToDevice);
-	cudaMemcpy(dev_st,st,2*LY*edges.size()*sizeof(int),cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_te,te,LY*edges.size()*sizeof(int),cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_st,st,LY*edges.size()*sizeof(int),cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_w,w,LY*edges.size()*sizeof(int),cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_d,d,YE*LY*nodenum*sizeof(int),cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_m,m,sizeof(int),cudaMemcpyHostToDevice);
 	cout<<nodenum<<endl;
 };
 parallelor::parallelor()
 {
 };
-
-__global__ void BFSfast(int *st,int *te,int *d,int round,int E,int N,int size)
+__global__ void bellmanhigh(int *st,int *te,int *d,int *w,int E,int N,int size,int*m)
 {
 	int i = threadIdx.x + blockIdx.x*blockDim.x;
-	if(i>size)return;
+	if(i>size)return;	
 	int eid=(i%(E*LY));
-	int s=st[eid],t=te[eid];
+	int s=st[eid],t=te[eid],weight=w[eid];
+	if(weight<0)return;
 	int ye=i/(E*LY);
 	int ly=eid/E;
 	int off=ye*N+ly*N*YE;
-	//if(d[s+off]==round-1&&d[t+off]>round)
-	d[t+off]=1;//round;
+	if(d[s+off]+weight<d[t+off])
+		{
+			d[t+off]=weight+d[s+off];
+			*m=1;
+		}
 }
 vector<vector<int>> parallelor::routalg(int s,int t,int bw)
 {
@@ -121,30 +138,29 @@ vector<vector<int>> parallelor::routalg(int s,int t,int bw)
 	int kk=1;
 	time_t start,end;
 	start=clock();
-	int size=2*edges.size()*LY*YE;
-	for(int i=1;i<=WD;i++)
-		BFSfast<<<size/512+1,512>>>(dev_st,dev_te,dev_d,i,2*edges.size(),nodenum,size);
-	cudaMemcpy(d,dev_d,nodenum*LY*YE*sizeof(int),cudaMemcpyDeviceToHost);
+	int size=edges.size()*LY*YE;
+	cout<<"size is: "<<size<<endl;
+	*m=1;
+	while(*m==1)
+	{
+		*m=0;
+		cudaMemcpy(dev_m,m,sizeof(int),cudaMemcpyHostToDevice);
+		bellmanhigh<<<size/512+1,512>>>(dev_st,dev_te,dev_d,dev_w,edges.size(),nodenum,size,dev_m);
+		cudaMemcpy(m,dev_m,sizeof(int),cudaMemcpyDeviceToHost);
+	}
+	cudaMemcpy(d,dev_d,LY*YE*nodenum*sizeof(int),cudaMemcpyDeviceToHost);
+	for(int i=0;i<LY*YE*nodenum;i++)
+		cout<<d[i]<<" ";
+	cout<<endl;
 	cudaStreamSynchronize(0);
-	for(int i=0;i<nodenum*LY*YE;i++)
-		if(d[i]!=6&&d[i]!=0)
-			cout<<i<<" "<<d[i]<<endl;
-	
 	end=clock();
 	cout<<"GPU time is : "<<end-start<<endl;
 	cout<<"over!"<<endl;
 	vector<vector<int>>result(LY,vector<int>());
-	for(int k=0;k<LY;k++)
-	{
-		int woff=k*YE*nodenum;
-		for(int i=0;i<YE;i++)
-		{
-			result[k].push_back(d[woff+i*nodenum+stp[i].second]);
-		}
-	}
 	cudaFree(dev_te);
 	cudaFree(dev_st);
 	cudaFree(dev_d);
+	cudaFree(dev_w);
 	cout<<"before return"<<endl;
 	return result;
 };
