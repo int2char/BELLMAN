@@ -207,6 +207,7 @@ class parallelor:public algbase
 		int W;
 		int *st,*te,*dev_st,*dev_te;
 		int *chan,*dev_chan;
+		int*p,*dev_p;
 		int*esignes;
 		vector<vector<int>>neibn;
 		int *mark,*dev_mark;

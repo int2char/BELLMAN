@@ -32,7 +32,6 @@ void parallelor::topsort()
 	vector<pair<int,int>>tmp;
 	for(int i=0;i<order.size();i++)
 		tmp.push_back(make_pair(i,order[i]));
-	//sort(tmp.begin(),tmp.end(),pairless());
 	for(int i=0;i<order.size();i++)
 		ordernode.push_back(tmp[i].first);
 };
@@ -50,6 +49,7 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 	st=new int[edges.size()*LY];
 	te=new int[edges.size()*LY];
 	d=new int[nodenum*LY*YE];
+	p=new int[nodenum*LY*YE];
 	w=new int[edges.size()*LY];
 	m=new int;
 	esignes=new int[edges.size()*LY];
@@ -77,7 +77,7 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 			}
 	//cout<<"good so far "<<endl;
 	for(int i=0;i<nodenum*LY*YE;i++)
-		d[i]=INT_MAX/2;
+		d[i]=INT_MAX/2,p[i]=-1;
 	int cc=0;
 	for(int k=0;k<LY;k++)
 		for(int i=0;i<edges.size();i++)
@@ -93,14 +93,10 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 				d[boff+soff+stpair[i].first]=0;
 		}
 	}
-	//for(int i=0;i<edges.size();i++)
-		//cout<<st[i]<<" "<<te[i]<<" "<<w[i]<<endl;
-	//for(int i=0;i<nodenum;i++)
-		//cout<<d[i]<<endl;
-	//cout<<"good so far "<<endl;
 	cudaMalloc((void**)&dev_st,LY*edges.size()*sizeof(int));
 	cudaMalloc((void**)&dev_te,LY*edges.size()*sizeof(int));
 	cudaMalloc((void**)&dev_d,YE*LY*nodenum*sizeof(int));
+	cudaMalloc((void**)&dev_p,YE*LY*nodenum*sizeof(int));
 	cudaMalloc((void**)&dev_w,LY*edges.size()*sizeof(int));
 	cudaMalloc((void**)&dev_m,sizeof(int));
 	if(dev_d==NULL) {
@@ -110,6 +106,7 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 	cudaMemcpy(dev_st,st,LY*edges.size()*sizeof(int),cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_w,w,LY*edges.size()*sizeof(int),cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_d,d,YE*LY*nodenum*sizeof(int),cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_p,p,YE*LY*nodenum*sizeof(int),cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_m,m,sizeof(int),cudaMemcpyHostToDevice);
 	cout<<nodenum<<endl;
 };
@@ -132,9 +129,21 @@ __global__ void bellmanhigh(int *st,int *te,int *d,int *w,int E,int N,int size,i
 			*m=1;
 		}
 }
+__global__ void color(int *st,int *te,int *d,int*pre,int *w,int E,int N,int size)
+{
+	int i = threadIdx.x + blockIdx.x*blockDim.x;
+	if(i>size)return;	
+	int eid=(i%(E*LY));
+	int s=st[eid],t=te[eid],weight=w[eid];
+	if(weight<0)return;
+	int ye=i/(E*LY);
+	int ly=eid/E;
+	int off=ye*N+ly*N*YE;
+	if(d[s+off]+weight==d[t+off])
+		pre[t+off]=s+off;
+}
 vector<vector<int>> parallelor::routalg(int s,int t,int bw)
 {
-	//cout<<"blasting "<<endl;
 	int kk=1;
 	time_t start,end;
 	start=clock();
@@ -146,11 +155,10 @@ vector<vector<int>> parallelor::routalg(int s,int t,int bw)
 		*m=0;
 		cudaMemcpy(dev_m,m,sizeof(int),cudaMemcpyHostToDevice);
 		bellmanhigh<<<size/512+1,512>>>(dev_st,dev_te,dev_d,dev_w,edges.size(),nodenum,size,dev_m);
+		color<<<size/512+1,512>>>(dev_st,dev_te,dev_d,dev_p,dev_w,edges.size(),nodenum,size);
 		cudaMemcpy(m,dev_m,sizeof(int),cudaMemcpyDeviceToHost);
 	}
 	cudaMemcpy(d,dev_d,LY*YE*nodenum*sizeof(int),cudaMemcpyDeviceToHost);
-	/*for(int i=0;i<LY*YE*nodenum;i++)
-		cout<<d[i]<<" ";*/
 	cout<<endl;
 	cudaStreamSynchronize(0);
 	end=clock();
