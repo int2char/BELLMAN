@@ -4,7 +4,6 @@
 #include"pathalg.h"
 static const int WORK_SIZE =258;
 void parallelor::copydata(int s,vector<edge>&edges,int nodenum){
-	
 };
 void parallelor::dellocate(){
 };
@@ -116,7 +115,7 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 parallelor::parallelor()
 {
 };
-__global__ void bellmanhigh(int *st,int *te,int *d,int*has,int *w,int E,int N,int size,int*m,int round)
+__global__ void bellmanhigh(int *st,int *te,int *d,int *has,int *w,int E,int N,int size,int *m,int round)
 {
 	int i = threadIdx.x + blockIdx.x*blockDim.x;
 	if(i>size)return;	
@@ -132,7 +131,7 @@ __global__ void bellmanhigh(int *st,int *te,int *d,int*has,int *w,int E,int N,in
 			*m=1;
 		}
 }
-__global__ void color(int *st,int *te,int *d,int*pre,int*has,int *w,int E,int N,int size,int round)
+__global__ void color(int *st,int *te,int *d,int *pre,int *has,int *w,int E,int N,int size,int round)
 {
 	int i = threadIdx.x + blockIdx.x*blockDim.x;
 	if(i>size)return;	
@@ -158,14 +157,11 @@ vector<vector<int>> parallelor::routalg(int s,int t,int bw)
 		*m=0;
 		cudaMemcpy(dev_m,m,sizeof(int),cudaMemcpyHostToDevice);
 		bellmanhigh<<<size/1024+1,1024>>>(dev_st,dev_te,dev_d,dev_has,dev_w,edges.size(),nodenum,size,dev_m,round);
-		color<<<size/1024+1,1024>>>(dev_st,dev_te,dev_d,dev_p,dev_has,dev_w,edges.size(),nodenum,size,round);
+	 	color<<<size/1024+1,1024>>>(dev_st,dev_te,dev_d,dev_p,dev_has,dev_w,edges.size(),nodenum,size,round);
 		round++;
 		cudaMemcpy(m,dev_m,sizeof(int),cudaMemcpyDeviceToHost);
 	}
 	cudaMemcpy(d,dev_d,LY*YE*nodenum*sizeof(int),cudaMemcpyDeviceToHost);
-	for(int i=0;i<nodenum;i++)
-		cout<<d[i]<<" ";
-	cout<<endl;
 	cudaStreamSynchronize(0);
 	end=clock();
 	cout<<"GPU time is : "<<end-start<<endl;

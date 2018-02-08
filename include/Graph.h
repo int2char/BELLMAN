@@ -15,11 +15,11 @@ struct levelGraph {
     vector<vector<edge>>neartable;
     int levelsize;
 };
-struct Edge {
+/*struct Edge {
     int from, to, bandwith;
     double unit_price;
     Edge(int f, int t, int b, double up) : from(f), to(t), bandwith(b), unit_price(up) {};
-};
+};*/
 struct fedge{
 	int from,to,price,cap;
 	fedge(int f,int t,int p,int c):from(f),to(t),price(p),cap(c){};
@@ -117,10 +117,10 @@ class Graph
             	for(int j=0;j<2*edges.size();j++)
             	{
             		
-            		int ran=rand()%100;
-            		if(ran<20)
-            			esigns[i].push_back(-1);
-            		else
+            		//int ran=rand()%100;
+            		//if(ran<20)
+            			//esigns[i].push_back(-1);
+            		//else
             			esigns[i].push_back(rand()%10+1);
             	}
             //assdsasd.
@@ -158,7 +158,7 @@ class Graph
             for(int i=0;i<YE;i++)
             {
             	int t=i;
-            	while(t==i)t=rand()%n;
+            	while(t==i)t=rand()%(n/W);
             	stpair.push_back(make_pair(i,t));
             }
             /*vector<pair<int,int>> exstpair;
