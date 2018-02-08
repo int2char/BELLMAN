@@ -131,11 +131,14 @@ class dijkstor:public algbase{
 							peg[i]=-1;
 						}
 						int cur = s;
-						Heap heap;
-						for (int i = 0;i<nodenum;i++)
-							heap.push(i, d[i]);
+						//Heap heap;
+						priority_queue<pair<int, int>,vector<pair<int,int>>,std::less<std::pair<int, int>>>heap;
+						/*for (int i = 0;i<nodenum;i++)
+							heap.push(i, d[i]);*/
+						heap.push(make_pair(s,d[s]));
 						do{
-							int cur = heap.pop();
+							int cur = heap.top().first;
+							heap.pop();
 							flag[cur] = 1;
 							if (cur == t)
 								{	
@@ -147,7 +150,8 @@ class dijkstor:public algbase{
 									int to=nein[k][cur][i];
 									if (flag[to] ==0&&d[to]>(d[cur]+neie[k][cur][i])&&neie[k][cur][i]>0){
 										d[to] = d[cur]+neie[k][cur][i];
-										heap.update(to, d[to]);
+										//heap.update(to, d[to]);
+										heap.push(make_pair(to,d[to]));
 										peg[to]=cur;
 								}
 							}
