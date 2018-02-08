@@ -111,6 +111,7 @@ class Graph
             	for(int j=0;j<near[i].size();j++)
             		redges.push_back(edge(i,near[i][j],1));
             cout<<"asasd"<<endl;
+            
             vector<vector<int>>esigns(LY,vector<int>());
             for(int i=0;i<LY;i++)
             	for(int j=0;j<2*edges.size();j++)
@@ -122,17 +123,62 @@ class Graph
             		else
             			esigns[i].push_back(rand()%10+1);
             	}
+            //assdsasd.
+            int W=WD+1;
+            vector<vector<int>>nesigns(LY,vector<int>());
+            vector<edge>nedges;
+            n=n*W;
+            for(int i=0;i<redges.size();i++)
+            {
+            	int s=redges[i].s;
+            	int t=redges[i].t;
+            	for(int j=0;j<W;j++)
+            	{
+            		int s=s*W+i;
+            		int t=t*W+i+1;
+            		nedges.push_back(edge(s,t,1));
+            	}
+            }
+            for(int k=0;k<LY;k++)
+				for(int i=0;i<redges.size();i++)
+				{
+					int s=redges[i].s;
+					int t=redges[i].t;
+					for(int j=0;j<W;j++)
+					{
+						int s=s*W+i;
+						int t=t*W+i+1;
+						nedges.push_back(edge(s,t,1));
+						nesigns[k].push_back(esigns[k][i]);
+					}
+				}
+            //asdasdasdasd.
             vector<pair<int,int>> stpair;
             int count=0;
-            set<pair<int,int>>has;
             for(int i=0;i<YE;i++)
             {
             	int t=i;
             	while(t==i)t=rand()%n;
             	stpair.push_back(make_pair(i,t));
             }
-            router1.init(make_pair(redges,esigns),stpair,erelate,ginfo(maxedge+1,edges.size(),n,maxnode+1,etn2n));
-            router2.init(make_pair(redges,esigns),stpair,erelate,ginfo(maxedge+1,edges.size(),n,maxnode+1,etn2n));
+            /*vector<pair<int,int>> exstpair;
+            for(int i=0;i<YE;i++)
+            	{
+            		int s=stpair[i].first;
+            		int t=stpair[i].second;
+            		exstpair.push_back(make_pair(s*W,t*W));
+            	}
+            pair<vector<edge>,vector<vector<int>>>exte,exce;
+            if(IFHOP>0)
+            	{
+            	router1.init(make_pair(nedges,nesigns),exstpair,erelate,ginfo(maxedge+1,edges.size(),n,maxnode+1,etn2n));
+            	router2.init(make_pair(nedges,nesigns),exstpair,erelate,ginfo(maxedge+1,edges.size(),n,maxnode+1,etn2n));
+            	}*/
+            //else
+            {
+            	router1.init(make_pair(redges,esigns),stpair,erelate,ginfo(maxedge+1,edges.size(),n,maxnode+1,etn2n));
+            	router2.init(make_pair(redges,esigns),stpair,erelate,ginfo(maxedge+1,edges.size(),n/W,maxnode+1,etn2n));
+            }
             return make_pair(redges,esigns);
         };
 };

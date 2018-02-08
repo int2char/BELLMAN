@@ -15,9 +15,10 @@
 #define BS 5
 #define WD 8
 #ifndef LY 
-	#define LY 100
+	#define LY 2
 #endif
-#define YE 100
+#define YE 2
+#define IFHOP 1
 #define inf INT_MAX/2
 using namespace std;
 class algbase {
@@ -197,6 +198,7 @@ class parallelor:public algbase
 		int *dev_beg,*beg;
 		int *dev_value,*value;
 		int *dev_height,*height;
+		int *dev_has,*has;
 		int*w,*dev_w;
 		vector<vector<int>>neibour;
 		vector<edge>edges;

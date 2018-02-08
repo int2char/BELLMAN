@@ -37,7 +37,6 @@ void parallelor::topsort()
 };
 void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,int>>stpair,vector<vector<int>>&relate,ginfo ginf)
 {
-	//cout<<"in cuda init"<<endl;
 	nodenum=ginf.pnodesize;
 	edges=ext.first;
 	vector<vector<int>>esigns;
@@ -49,6 +48,7 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 	st=new int[edges.size()*LY];
 	te=new int[edges.size()*LY];
 	d=new int[nodenum*LY*YE];
+	has=new int[nodenum*LY*YE];
 	p=new int[nodenum*LY*YE];
 	w=new int[edges.size()*LY];
 	m=new int;
@@ -75,9 +75,8 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 					te[count]=neibn[i][j];
 				count++;
 			}
-	//cout<<"good so far "<<endl;
 	for(int i=0;i<nodenum*LY*YE;i++)
-		d[i]=INT_MAX/2,p[i]=-1;
+		d[i]=INT_MAX/2,p[i]=-1,has[i]=-1;
 	int cc=0;
 	for(int k=0;k<LY;k++)
 		for(int i=0;i<edges.size();i++)
@@ -90,13 +89,16 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 		{
 			int soff=i*nodenum;
 			for(int j=0;j<stpair.size();j++)
-				d[boff+soff+stpair[i].first]=0;
+				{d[boff+soff+stpair[i].first]=0;
+				 has[boff+soff+stpair[i].first]=1;
+				}
 		}
 	}
 	cudaMalloc((void**)&dev_st,LY*edges.size()*sizeof(int));
 	cudaMalloc((void**)&dev_te,LY*edges.size()*sizeof(int));
 	cudaMalloc((void**)&dev_d,YE*LY*nodenum*sizeof(int));
 	cudaMalloc((void**)&dev_p,YE*LY*nodenum*sizeof(int));
+	cudaMalloc((void**)&dev_has,YE*LY*nodenum*sizeof(int));
 	cudaMalloc((void**)&dev_w,LY*edges.size()*sizeof(int));
 	cudaMalloc((void**)&dev_m,sizeof(int));
 	if(dev_d==NULL) {
@@ -106,6 +108,7 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 	cudaMemcpy(dev_st,st,LY*edges.size()*sizeof(int),cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_w,w,LY*edges.size()*sizeof(int),cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_d,d,YE*LY*nodenum*sizeof(int),cudaMemcpyHostToDevice);
+	cudaMemcpy(dev_has,has,YE*LY*nodenum*sizeof(int),cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_p,p,YE*LY*nodenum*sizeof(int),cudaMemcpyHostToDevice);
 	cudaMemcpy(dev_m,m,sizeof(int),cudaMemcpyHostToDevice);
 	cout<<nodenum<<endl;
@@ -113,7 +116,7 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 parallelor::parallelor()
 {
 };
-__global__ void bellmanhigh(int *st,int *te,int *d,int *w,int E,int N,int size,int*m)
+__global__ void bellmanhigh(int *st,int *te,int *d,int*has,int *w,int E,int N,int size,int*m)
 {
 	int i = threadIdx.x + blockIdx.x*blockDim.x;
 	if(i>size)return;	
@@ -159,6 +162,8 @@ vector<vector<int>> parallelor::routalg(int s,int t,int bw)
 		cudaMemcpy(m,dev_m,sizeof(int),cudaMemcpyDeviceToHost);
 	}
 	cudaMemcpy(d,dev_d,LY*YE*nodenum*sizeof(int),cudaMemcpyDeviceToHost);
+	for(int i=0;i<nodenum;i++)
+		cout<<d[i]<<" ";
 	cout<<endl;
 	cudaStreamSynchronize(0);
 	end=clock();
