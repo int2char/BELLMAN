@@ -16,9 +16,9 @@
 #define BS 5
 #define WD 8
 #ifndef LY 
-	#define LY 1
+	#define LY 100
 #endif
-#define YE 10
+#define YE 100
 #define IFHOP 1
 #define inf INT_MAX/2
 using namespace std;
@@ -73,6 +73,7 @@ class dijkstor:public algbase{
         	edges=extenedges.first;
         	vector<vector<int>>esigns=extenedges.second;
         	edgesize=edges.size(),nodenum=ginf.enodesize,pesize=ginf.pesize,pnodesize=ginf.pnodesize;
+        	nodenum=pnodesize;
         	exn2n=ginf.exn2n;
         	vector<vector<int>>nd(nodenum*LY,vector<int>());
         	neibour=nd;
@@ -107,6 +108,8 @@ class dijkstor:public algbase{
         }
         virtual vector<vector<int>> routalg(int s,int t,int bw){
         		cout<<"in rout alg"<<endl;
+				cout<<"nodenum: "<<nodenum<<endl;
+				cout<<"edge size :"<<edges.size()<<endl;
         		time_t start,end;
         		start=clock();
         		vector<vector<int>>result(LY,vector<int>());
@@ -131,14 +134,11 @@ class dijkstor:public algbase{
 							peg[i]=-1;
 						}
 						int cur = s;
-						//Heap heap;
-						priority_queue<pair<int, int>,vector<pair<int,int>>,std::less<std::pair<int, int>>>heap;
-						/*for (int i = 0;i<nodenum;i++)
-							heap.push(i, d[i]);*/
-						heap.push(make_pair(s,d[s]));
+						Heap heap(nodenum);
+						for (int i = 0;i<nodenum;i++)
+							heap.push(i, d[i]);
 						do{
-							int cur = heap.top().first;
-							heap.pop();
+							int cur = heap.pop();
 							flag[cur] = 1;
 							if (cur == t)
 								{	
@@ -150,8 +150,7 @@ class dijkstor:public algbase{
 									int to=nein[k][cur][i];
 									if (flag[to] ==0&&d[to]>(d[cur]+neie[k][cur][i])&&neie[k][cur][i]>0){
 										d[to] = d[cur]+neie[k][cur][i];
-										//heap.update(to, d[to]);
-										heap.push(make_pair(to,d[to]));
+										heap.update(to, d[to]);
 										peg[to]=cur;
 								}
 							}
@@ -166,12 +165,9 @@ class dijkstor:public algbase{
 							}
 							//cout<<prn<<" ";
 						}
-						//cout<<"d: "<<d[t]<<" ";
 						//cout<<endl;
-						//result[k].push_back(tv);
         			}
         		}
-        		//cout<<endl;
         		end=clock();
         		cout<<"cpu time is: "<<end-start<<endl;
         		cout<<"good sofor"<<endl;

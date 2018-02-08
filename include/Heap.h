@@ -1,20 +1,21 @@
 #include"Edge.h"
-#define NN 100000
+#include<vector>
+#define NN 10000
+using namespace std; 
 class Heap
 {
 public:
-	Heap();
+	Heap(int n);
 	~Heap();
 	void push(int vertID, int w);
 	void update(int vertID, int w);
 	int pop();
 	int empty();
 private:
-	Edge *h[NN + 10];
-	int post[NN + 10];
+	vector<Edge> h;
+	vector<int> post;
 	int nodeNum;
 	void fix(int fixID);
-
 };
 
 
