@@ -90,7 +90,7 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 			int soff=i*nodenum;
 			for(int j=0;j<stpair.size();j++)
 				{d[boff+soff+stpair[i].first]=0;
-				 has[boff+soff+stpair[i].first]=1;
+				 has[boff+soff+stpair[i].first]=0;
 				}
 		}
 	}
@@ -116,32 +116,31 @@ void parallelor::init(pair<vector<edge>,vector<vector<int>>>ext,vector<pair<int,
 parallelor::parallelor()
 {
 };
-__global__ void bellmanhigh(int *st,int *te,int *d,int*has,int *w,int E,int N,int size,int*m)
+__global__ void bellmanhigh(int *st,int *te,int *d,int*has,int *w,int E,int N,int size,int*m,int round)
 {
 	int i = threadIdx.x + blockIdx.x*blockDim.x;
 	if(i>size)return;	
 	int eid=(i%(E*LY));
 	int s=st[eid],t=te[eid],weight=w[eid];
 	if(weight<0)return;
-	int ye=i/(E*LY);
-	int ly=eid/E;
-	int off=ye*N+ly*N*YE;
+	int off=(i/(E*LY))*N+(eid/E)*N*YE;
+	if(has[s+off]<round-1)return;
 	if(d[s+off]+weight<d[t+off])
 		{
 			d[t+off]=weight+d[s+off];
+			has[t+off]=round;
 			*m=1;
 		}
 }
-__global__ void color(int *st,int *te,int *d,int*pre,int *w,int E,int N,int size)
+__global__ void color(int *st,int *te,int *d,int*pre,int*has,int *w,int E,int N,int size,int round)
 {
 	int i = threadIdx.x + blockIdx.x*blockDim.x;
 	if(i>size)return;	
 	int eid=(i%(E*LY));
 	int s=st[eid],t=te[eid],weight=w[eid];
 	if(weight<0)return;
-	int ye=i/(E*LY);
-	int ly=eid/E;
-	int off=ye*N+ly*N*YE;
+	int off=(i/(E*LY))*N+(eid/E)*N*YE;
+	if(has[s+off]<round-1)return;
 	if(d[s+off]+weight==d[t+off])
 		pre[t+off]=s+off;
 }
@@ -153,12 +152,14 @@ vector<vector<int>> parallelor::routalg(int s,int t,int bw)
 	int size=edges.size()*LY*YE;
 	cout<<"size is: "<<size<<endl;
 	*m=1;
+	int round=1;
 	while(*m==1)
 	{
 		*m=0;
 		cudaMemcpy(dev_m,m,sizeof(int),cudaMemcpyHostToDevice);
-		bellmanhigh<<<size/512+1,512>>>(dev_st,dev_te,dev_d,dev_w,edges.size(),nodenum,size,dev_m);
-		color<<<size/512+1,512>>>(dev_st,dev_te,dev_d,dev_p,dev_w,edges.size(),nodenum,size);
+		bellmanhigh<<<size/1024+1,1024>>>(dev_st,dev_te,dev_d,dev_has,dev_w,edges.size(),nodenum,size,dev_m,round);
+		color<<<size/1024+1,1024>>>(dev_st,dev_te,dev_d,dev_p,dev_has,dev_w,edges.size(),nodenum,size,round);
+		round++;
 		cudaMemcpy(m,dev_m,sizeof(int),cudaMemcpyDeviceToHost);
 	}
 	cudaMemcpy(d,dev_d,LY*YE*nodenum*sizeof(int),cudaMemcpyDeviceToHost);
