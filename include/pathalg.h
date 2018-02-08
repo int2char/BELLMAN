@@ -136,7 +136,6 @@ class dijkstor:public algbase{
 							heap.push(i, d[i]);
 						do{
 							int cur = heap.pop();
-							//cout<<cur<<endl;
 							flag[cur] = 1;
 							if (cur == t)
 								{	
@@ -144,16 +143,12 @@ class dijkstor:public algbase{
 									break;
 								}
 							int size = nein[k][cur].size();
-							//cout<<"size is :"<<endl;
 							for (int i = 0;i<size; i++){
 									int to=nein[k][cur][i];
-									int delt = 0;
 									if (flag[to] ==0&&d[to]>(d[cur]+neie[k][cur][i])&&neie[k][cur][i]>0){
-										//cout<<"in"<<endl;
 										d[to] = d[cur]+neie[k][cur][i];
 										heap.update(to, d[to]);
 										peg[to]=cur;
-									
 								}
 							}
 						} while (!heap.empty());

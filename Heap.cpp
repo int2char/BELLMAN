@@ -18,9 +18,7 @@ Heap::Heap(){
 }
 void Heap::push(int vertID, int w){
 	nodeNum++;
-	h[nodeNum] = (Edge *)malloc(sizeof(Edge));
-	h[nodeNum]->head = vertID;
-	h[nodeNum]->weight = w;
+	h[nodeNum] = (Edge*)new Edge(vertID,w);
 	post[vertID] = nodeNum;
 	fix(nodeNum);
 }
@@ -31,7 +29,7 @@ void Heap::update(int vertID, int w){
 }
 int Heap::pop(){
 	int ret = h[1]->head;
-	free(h[1]);
+	delete h[1];
 	h[1] = h[nodeNum--];
 	if (nodeNum > 0)
 		post[h[1]->head] = 1;
